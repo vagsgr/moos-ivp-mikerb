@@ -2,13 +2,52 @@
 
 ServerHost = localhost
 ServerPort = 9000
+Community  = alpha
 
-ProcessConfig = pXRelayTest
+//------------------------------------------
+// Antler configuration block
+ProcessConfig = ANTLER
+{
+  MSBetweenLaunches = 200
+
+  Run = MOOSDB       @ NewConsole = false
+  Run = pXRelayTest  @ NewConsole = true ~ pXRelayTest_APPLES
+  Run = pXRelayTest  @ NewConsole = true ~ pXRelayTest_PEARS
+  Run = uXMS         @ NewConsole = true
+}
+
+//------------------------------------------
+// First pXRelayTest configuration block
+
+ProcessConfig = pXRelayTest_APPLES
 {
    AppTick   = 4
    CommsTick = 4
- 
+
    OUTGOING_VAR = APPLES
    INCOMING_VAR = PEARS
 }
 
+//------------------------------------------
+// Second pXRelayTest configuration block
+
+ProcessConfig = pXRelayTest_PEARS
+{
+   AppTick   = 4
+   CommsTick = 4
+
+   OUTGOING_VAR = PEARS
+   INCOMING_VAR = APPLES
+}
+
+//------------------------------------------
+// uXMS configuration block
+
+ProcessConfig = uXMS
+{
+   AppTick   = 4
+   CommsTick = 4
+
+   VAR = PEARS,  PEARS_ITER_HZ,  PEARS_POST_HZ
+   VAR = APPLES, APPLES_ITER_HZ, APPLES_POST_HZ
+}

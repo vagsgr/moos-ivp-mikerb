@@ -10,32 +10,32 @@ ProcessConfig = ANTLER
   MSBetweenLaunches = 200
 
   Run = MOOSDB       @ NewConsole = false
-  Run = pXRelay      @ NewConsole = true ~ pXRelay_APPLES
-  Run = pXRelay      @ NewConsole = true ~ pXRelay_PEARS
+  Run = pXRelayTest  @ NewConsole = true ~ pXRelayTest_APPLES
+  Run = pXRelayTest  @ NewConsole = true ~ pXRelayTest_PEARS
   Run = uXMS         @ NewConsole = true
 }
 
 
 //------------------------------------------
-// First pXRelay configuration block
+// First pXRelayTest configuration block
 
-ProcessConfig = pXRelay_APPLES
+ProcessConfig = pXRelayTest_APPLES
 {
    AppTick   = 4
    CommsTick = 4
- 
+
    OUTGOING_VAR = APPLES
    INCOMING_VAR = PEARS
 }
 
 //------------------------------------------
-// Second pXRelay configuration block
+// Second pXRelayTest configuration block
 
-ProcessConfig = pXRelay_PEARS
+ProcessConfig = pXRelayTest_PEARS
 {
    AppTick   = 4
    CommsTick = 4
- 
+
    OUTGOING_VAR = PEARS
    INCOMING_VAR = APPLES
 }
