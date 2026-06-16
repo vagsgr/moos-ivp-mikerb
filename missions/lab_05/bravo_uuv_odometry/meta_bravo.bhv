@@ -108,6 +108,22 @@ Behavior = BHV_ConstantDepth
 }
 
 //----------------------------------------------
+// CONSTANT DEPTH RETURN - [ΔΙΟΡΘΩΣΗ] κατα την επιστροφη ΠΡΕΠΕΙ να υπαρχει
+//   ενεργο behavior βαθους, αλλιως ο helm (domain=...:depth) ριχνει
+//   ALLSTOP: MissingDecVars:depth (καμια αποφαση για τη διασταση βαθους).
+//   ΙΔΙΕΣ conditions με το waypt_return -> οποτε γυρναμε, αναδυομαστε (0m).
+Behavior = BHV_ConstantDepth
+{
+  name      = const_depth_return
+  pwt       = 100
+  condition = (RETURN = true) or (ODOMETRY_DIST_AT_DEPTH >= $(TRIP_DIST))
+  condition = DEPLOY = true
+
+  duration  = no-time-limit
+  depth     = 0                         // αναδυση στην επιφανεια για επιστροφη
+}
+
+//----------------------------------------------
 // WAYPOINT RETURN - [ΑΠΑΙΤΗΣΗ Ass.8] αυτοματη επιστροφη στα 200m σε βαθος,
 //                   Η χειροκινητα με το RETURN button (compound OR συνθηκη)
 Behavior = BHV_Waypoint
