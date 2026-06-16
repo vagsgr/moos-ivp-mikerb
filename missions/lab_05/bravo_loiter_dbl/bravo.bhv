@@ -1,0 +1,90 @@
+//----------------------------------------------------------------
+// FILE: bravo.bhv
+// LAB 05 - Assignment 4: The Bravo Double Loiter Mission
+//----------------------------------------------------------------
+// ΣΤΟΧΟΣ: Δυο loiter περιοχες (west & east). Το vehicle εναλλασσεται
+//         αυτοματα μεταξυ τους καθε 150s. ΔΕΝ επιστρεφει μεχρι ο
+//         χρηστης να πατησει RETURN.
+//
+// ΜΗΧΑΝΙΣΜΟΣ: Κοινη μεταβλητη LOITER_REGION (west/east) κανει τα δυο
+//   loiters αμοιβαια αποκλειομενα. Οταν το ενα ολοκληρωσει τα 150s,
+//   το endflag του αλλαζει το LOITER_REGION -> αυτο ΤΑΥΤΟΧΡΟΝΑ:
+//     (a) ικανοποιει τη συνθηκη του ΑΛΛΟΥ loiter, και
+//     (b) ακυρωνει τη συνθηκη του loiter που μολις τελειωσε.
+//   Το perpetual=true επιτρεπει σε ενα ολοκληρωμενο behavior να
+//   ξανατρεξει οταν ξαναϊκανοποιηθουν οι συνθηκες του.
+//
+// ΡΟΗ: DEPLOY -> loiter_west 150s -> loiter_east 150s -> west -> ...
+//      (ατερμονα, μεχρι ο χρηστης να πατησει RETURN)
+//----------------------------------------------------------------
+
+initialize   DEPLOY = false
+initialize   RETURN = false
+initialize   LOITER_REGION = west      // ξεκινα στη δυτικη περιοχη
+
+//----------------------------------------------
+// LOITER WEST - πρωτη περιοχη (ιδια θεση με το Assignment 3)
+Behavior = BHV_Loiter
+{
+  name      = loiter_west
+  pwt       = 100
+  condition = RETURN = false            // οχι σε φαση επιστροφης
+  condition = DEPLOY = true
+  condition = LOITER_REGION = west      // [ΑΠΑΙΤΗΣΗ] ενεργο μονο στη δυση
+
+  duration  = 150                       // [ΑΠΑΙΤΗΣΗ] 150s ανα περιοχη
+  perpetual = true                      // [ΑΠΑΙΤΗΣΗ] ξαναχρησιμοποιησιμο
+
+  // [ΑΠΑΙΤΗΣΗ] οταν τελειωσει -> περνα στην east (κανει (a) και (b) μαζι)
+  endflag   = LOITER_REGION = east
+
+         speed = 2.5
+     clockwise = false
+       polygon = format=radial, x=100, y=-75, radius=30, pts=8
+
+  visual_hints = vertex_size=1, edge_color=light_blue
+  visual_hints = vertex_color=dodger_blue, label_color=invisible
+}
+
+//----------------------------------------------
+// LOITER EAST - δευτερη περιοχη (νεα)
+Behavior = BHV_Loiter
+{
+  name      = loiter_east
+  pwt       = 100
+  condition = RETURN = false
+  condition = DEPLOY = true
+  condition = LOITER_REGION = east      // [ΑΠΑΙΤΗΣΗ] ενεργο μονο στην ανατολη
+                                        // (ΟΧΙ ενεργο στο αρχικο deploy)
+  duration  = 150
+  perpetual = true
+
+  endflag   = LOITER_REGION = west      // οταν τελειωσει -> γυρνα στη west
+
+         speed = 2.5                    // [ΑΠΑΙΤΗΣΗ] ταχυτητα 2.5 m/s
+     clockwise = false
+       // [ΑΠΑΙΤΗΣΗ] κεντρο (160,-50), radius 20m, 8 κορυφες
+       polygon = format=radial, x=160, y=-50, radius=20, pts=8
+
+  visual_hints = vertex_size=1, edge_color=light_green
+  visual_hints = vertex_color=green, label_color=invisible
+}
+
+//----------------------------------------------
+// WAYPOINT RETURN - επιστροφη μονο οταν ο χρηστης πατησει RETURN
+Behavior = BHV_Waypoint
+{
+  name      = waypt_return
+  pwt       = 100
+  condition = RETURN = true             // ενεργοποιειται απο το RETURN button
+  condition = DEPLOY = true
+  perpetual = true
+  endflag   = RETURN = false
+  endflag   = DEPLOY = false
+  endflag   = MISSION = complete
+
+           speed = 2.5
+  capture_radius = 2.0
+     slip_radius = 8.0
+          points = 0,0                  // επιστροφη στην αρχη
+}

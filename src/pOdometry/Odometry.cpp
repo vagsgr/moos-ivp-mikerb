@@ -21,9 +21,12 @@ Odometry::Odometry()
   m_first_reading  = true;
   m_current_x      = 0;
   m_current_y      = 0;
+  m_current_depth  = 0;   // [ASS.8] trexon bathos
   m_previous_x     = 0;
   m_previous_y     = 0;
   m_total_distance = 0;
+  m_dist_at_depth  = 0;   // [ASS.8] apostasi se bathos
+  m_depth_thresh   = 0;   // [ASS.8] default 0 = metrame panta (apenergopoiimeno)
 }
 
 //---------------------------------------------------------
@@ -59,6 +62,8 @@ bool Odometry::OnNewMail(MOOSMSG_LIST &NewMail)
        m_current_x = msg.GetDouble();
      else if(key == "NAV_Y")
        m_current_y = msg.GetDouble();
+     else if(key == "NAV_DEPTH")        // [ASS.8] kratame to trexon bathos
+       m_current_depth = msg.GetDouble();
      else if(key != "APPCAST_REQ") // handled by AppCastingMOOSApp
        reportRunWarning("Unhandled Mail: " + key);
    }
@@ -90,12 +95,20 @@ bool Odometry::Iterate()
   } else {
     double dx = m_current_x - m_previous_x;
     double dy = m_current_y - m_previous_y;
-    m_total_distance += hypot(dx, dy);
+    double dist = hypot(dx, dy);
+    m_total_distance += dist;                  // sunoliki apostasi: panta
+
+    // [ASS.8] prosthetoume sto dist_at_depth mono an to trexon bathos
+    // einai megalutero apo to katofli depth_thresh
+    if(m_current_depth > m_depth_thresh)
+      m_dist_at_depth += dist;
+
     m_previous_x = m_current_x;
     m_previous_y = m_current_y;
   }
 
   Notify("ODOMETRY_DIST", m_total_distance);
+  Notify("ODOMETRY_DIST_AT_DEPTH", m_dist_at_depth);   // [ASS.8]
 
   AppCastingMOOSApp::PostReport();
   return(true);
@@ -122,11 +135,8 @@ bool Odometry::OnStartUp()
     string value = line;
 
     bool handled = false;
-    if(param == "foo") {
-      handled = true;
-    }
-    else if(param == "bar") {
-      handled = true;
+    if(param == "depth_thresh") {            // [ASS.8] katofli bathous se metra
+      handled = setNonNegDoubleOnString(m_depth_thresh, value);
     }
 
     if(!handled)
@@ -147,6 +157,7 @@ void Odometry::registerVariables()
   AppCastingMOOSApp::RegisterVariables();
   Register("NAV_X", 0);
   Register("NAV_Y", 0);
+  Register("NAV_DEPTH", 0);   // [ASS.8] gia ton ipologismo apostasis se bathos
 }
 
 
@@ -162,9 +173,12 @@ bool Odometry::buildReport()
   ACTable actab(2);
   actab << "Variable | Value";
   actab.addHeaderLines();
-  actab << "Total Distance (m)" << m_total_distance;
-  actab << "Current X"          << m_current_x;
-  actab << "Current Y"          << m_current_y;
+  actab << "Total Distance (m)"      << m_total_distance;   // [ASS.8] sunoliki
+  actab << "Dist At Depth (m)"       << m_dist_at_depth;    // [ASS.8] se bathos
+  actab << "Depth Thresh (m)"        << m_depth_thresh;     // [ASS.8] katofli
+  actab << "Current Depth (m)"       << m_current_depth;    // [ASS.8] trexon bathos
+  actab << "Current X"               << m_current_x;
+  actab << "Current Y"               << m_current_y;
   m_msgs << actab.getFormattedString();
 
   return(true);
