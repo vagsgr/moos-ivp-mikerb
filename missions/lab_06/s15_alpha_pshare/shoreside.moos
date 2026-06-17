@@ -1,0 +1,138 @@
+//-------------------------------------------------
+// FILE: shoreside.moos   (Lab 06 - Exercise 1: Alpha pShare)
+//-------------------------------------------------
+// [ΣΗΜ] Auto to einai to SHORESIDE community (Command & Control).
+//       Edw zei mono o xeiristis: MOOSDB + pMarineViewer + pShare.
+//       DEN trexei helm/sim/PID -- ayta einai sto alpha.moos (to oxima).
+
+ServerHost   = localhost
+ServerPort   = 9000          // [ΣΗΜ] MOOSDB port shoreside = 9000 (symvasi "90xx")
+Community    = shoreside     // [ΣΗΜ] xexwristo onoma koinotitas
+MOOSTimeWarp = 1
+
+// Forest Lake
+LatOrigin  = 43.825300
+LongOrigin = -70.330400
+
+//------------------------------------------
+// Antler configuration block
+ProcessConfig = ANTLER
+{
+  MSBetweenLaunches = 200
+
+  Run = MOOSDB        @ NewConsole = false
+  Run = pLogger       @ NewConsole = false
+  Run = pShare        @ NewConsole = false   // [ΣΗΜ] gefyra pros to oxima
+  Run = pMarineViewer @ NewConsole = false   // [ΣΗΜ] mono edw o viewer
+  Run = uProcessWatch @ NewConsole = false
+  Run = pRealm        @ NewConsole = false
+}
+
+//------------------------------------------
+// pShare config block   [ΣΗΜ] H KARDIA tou Exercise 1
+ProcessConfig = pShare
+{
+  AppTick   = 4
+  CommsTick = 4
+
+  // [ΣΗΜ] INPUT: se poio port AKOUEI to shoreside (gia minimata apo to oxima)
+  input = route=localhost:9200
+
+  // [ΣΗΜ] OUTPUT: entoles SHORESIDE -> ALPHA (sto listen port 9201 tou alpha).
+  //       Ayta einai akrivws oi metavlites pou pokaroun ta koumpia tou viewer.
+  output = src_name=DEPLOY,               route=localhost:9201
+  output = src_name=RETURN,               route=localhost:9201
+  output = src_name=MOOS_MANUAL_OVERRIDE, route=localhost:9201
+  output = src_name=WPT_UPDATE,           route=localhost:9201   // koumpia SLOWER/FASTER
+  output = src_name=UPDATES_RETURN,       route=localhost:9201   // action menu
+}
+
+//------------------------------------------
+// pLogger config block
+ProcessConfig = pLogger
+{
+  AppTick   = 8
+  CommsTick = 8
+
+  AsyncLog = true
+
+  Log = IVPHELM_LIFE_EVENT @ 0 NOSYNC
+  Log = REPORT @ 0 NOSYNC
+  Log = BHV_SETTINGS @ 0 NOSYNC
+  Log = SUMMARY @ 0 NOSYNC
+
+  LogAuxSrc = true
+  WildCardLogging = true
+  WildCardOmitPattern = *_STATUS
+  WildCardOmitPattern = DB_VARSUMMARY
+  WildCardOmitPattern = DB_RWSUMMARY
+  WildCardExclusionLog = true
+}
+
+//------------------------------------------
+// uProcessWatch config block
+ProcessConfig = uProcessWatch
+{
+  AppTick   = 4
+  CommsTick = 4
+
+  watch_all = true
+  nowatch   = uPokeDB*
+  nowatch   = uQueryDB*
+  nowatch   = uXMS*
+  nowatch   = uMAC*
+}
+
+//------------------------------------------
+// pMarineViewer config block   [ΣΗΜ] idio me to s1_alpha -- ta koumpia menoun idia.
+//       Ta koumpia pokaroun TOPIKA sto shoreside MOOSDB, kai to pShare ta proothei.
+ProcessConfig = pMarineViewer
+{
+  AppTick    = 4
+  CommsTick  = 4
+
+  tiff_file            = forrest19.tif
+
+  set_pan_x            = -90
+  set_pan_y            = -280
+  zoom                 = 0.65
+  vehicle_shape_scale  = 1.5
+  hash_delta           = 50
+  hash_shade           = 0.22
+  hash_viewable        = true
+
+  trails_point_size   = 1
+
+  // Appcast configuration
+  appcast_height       = 75
+  appcast_width        = 30
+  appcast_viewable     = true
+  appcast_color_scheme = indigo
+  nodes_font_size      = xlarge
+  procs_font_size      = xlarge
+  appcast_font_size    = large
+
+  right_context[return] = DEPLOY=true
+  right_context[return] = MOOS_MANUAL_OVERRIDE=false
+  right_context[return] = RETURN=false
+
+  scope  = SUMMARY
+  scope  = RETURN
+  scope  = WPT_STAT
+  scope  = VIEW_SEGLIST
+  scope  = VIEW_POINT
+  scope  = VIEW_POLYGON
+  scope  = MVIEWER_LCLICK
+  scope  = MVIEWER_RCLICK
+
+  button_one = DEPLOY # DEPLOY=true
+  button_one = MOOS_MANUAL_OVERRIDE=false # RETURN=false
+  button_two = RETURN # RETURN=true
+  button_three = SLOWER # WPT_UPDATE=speed=1.5
+  button_four = FASTER # WPT_UPDATE=speed=3.5
+
+  action  = MENU_KEY=deploy # DEPLOY = true # RETURN = false
+  action+ = MENU_KEY=deploy # MOOS_MANUAL_OVERRIDE=false
+  action  = RETURN=true
+  action  = UPDATES_RETURN=speed=1.4
+}
