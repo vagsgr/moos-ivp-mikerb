@@ -37,6 +37,7 @@ GenPathMCTS::GenPathMCTS()
   m_got_last       = false;
   m_path_posted    = false;
   m_replan_pending = false;
+  m_refuel_needed  = false;
   m_last_plan_time = -1;
 
   m_my_visits      = 0;
@@ -67,6 +68,15 @@ bool GenPathMCTS::OnNewMail(MOOSMSG_LIST &NewMail)
       handlePointClaimed(msg.GetString());
     else if(key == "PLAN_CLAIM")
       handlePlanClaim(msg.GetString());
+    else if(key == "REFUEL_NEEDED") {
+      // [Lab07_upgr] Otan o anefodiasmos TELEIWNEI (true->false), to oxima einai
+      //   sto simeio anefodiasmou kai ksanaksekinaei tour. Zita FRESH plan apo edw
+      //   panw sta ENAPOMEINANTA (mi-visited, mi-claimed) simeia.
+      bool now = (tolower(msg.GetString()) == "true");
+      if(m_refuel_needed && !now)
+        m_replan_pending = true;
+      m_refuel_needed = now;
+    }
     else if(key == "NAV_X") {
       m_nav_x = msg.GetDouble();
       m_nav_ok = true;
@@ -418,6 +428,7 @@ void GenPathMCTS::registerVariables()
   Register("VISIT_POINT", 0);     // OLA ta simeia (broadcast apo to shoreside)
   Register("POINT_CLAIMED", 0);   // episkepseis (permanent, apo emas i to allo oxima)
   Register("PLAN_CLAIM", 0);      // schedia (proθeseis) twn allwn oximatwn
+  Register("REFUEL_NEEDED", 0);   // [Lab07_upgr] gia replan otan teleiwsei o anefodiasmos
   Register("NAV_X", 0);           // trexousa thesi oximatos
   Register("NAV_Y", 0);
 }

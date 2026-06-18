@@ -76,6 +76,7 @@ class GenPathMCTS : public AppCastingMOOSApp
    bool   m_got_last;                // eida to "lastpoint" (= irthan ola);
    bool   m_path_posted;             // exoume postarei toulaxiston mia fora;
    bool   m_replan_pending;          // allakse kati (nea diekdikisi) -> ksanasxediase
+   bool   m_refuel_needed;           // trexousa timi REFUEL_NEEDED (gia anixneusi listis)
    double m_last_plan_time;          // pote postaram teleftaia (gia throttle)
 
    unsigned int m_my_visits;         // posa simeia exoume diekdikisei EMEIS
