@@ -1,0 +1,27 @@
+//--------------------------------------------------
+// pLogger Configuration Block (Created from Plugin)
+
+ProcessConfig = pLogger
+{
+  AppTick 	= 10
+  CommsTick 	= 10
+  
+  File		= LOG_%(VNAME)
+  PATH		= ./
+  AsyncLog 	= true
+  FileTimeStamp = true
+
+  // Log it all!!!!!
+  LogAuxSrc       = true
+  WildCardLogging = true
+
+  // [ΣΗΜ Lab07 gotcha 3.6.2] Ta 100 VISIT_POINT ginontai ola MAZI (burst).
+  // To wildcard logging mathainei mia metavliti afou ti dei sto DB_VAR_SUMMARY,
+  // opote mporei na XASEI to arxiko burst. Me to parakatw, o logger grafetai
+  // gia to VISIT_POINT apo tin arxi -> ta katagrafei OLA.
+  Log = VISIT_POINT @ 0 nosync
+
+  WildCardOmitPattern = *_STATUS
+
+  CompressAlogs = false
+}

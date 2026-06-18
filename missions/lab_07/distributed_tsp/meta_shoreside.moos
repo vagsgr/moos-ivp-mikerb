@@ -1,0 +1,125 @@
+//*******************************************************
+// ShoreSide Configuration File
+
+ServerHost = localhost
+ServerPort = $(VPORT)
+Community  = $(VNAME)
+
+#include plug_origin_warp.moos
+  
+//--------------------------------------------------------
+Processconfig = ANTLER
+{
+  MSBetweenLaunches = 100
+
+  Run = MOOSDB          @ NewConsole = false
+  Run = pRealm          @ NewConsole = false
+  Run = pMarineViewer   @ NewConsole = false
+  Run = pLogger         @ NewConsole = false
+  Run = pShare          @ NewConsole = false
+  Run = pHostInfo       @ NewConsole = false
+  Run = uFldShoreBroker @ NewConsole = false
+  Run = uTimerScript    @ NewConsole = false   // [ΣΗΜ Lab07] gennaei ta VISIT_POINT
+  Run = pPointAssign    @ NewConsole = false   // [ΣΗΜ Lab07] moirazei ta simeia sta oximata
+  Run = pRealm          @ NewConsole = false
+}
+
+#include plug_pShare.moos
+#include plug_pHostInfo.moos
+#include plug_pLogger.moos
+#include plug_uTimerScript.moos
+
+//--------------------------------------------------
+// pRealm Configuration Block
+// [ΣΗΜ Lab07] hist_var=VISIT_POINT -> mporeis na deis OLO to istoriko twn
+//   VISIT_POINT zwntana sto RealmCasting (sto pMarineViewer pata 'a' gia na
+//   allakseis apo AppCasting se RealmCasting, dialekse to "shoreside" node
+//   kai meta to VISIT_POINT).
+ProcessConfig = pRealm
+{
+  AppTick   = 2
+  CommsTick = 2
+
+  hist_var     = VISIT_POINT
+  msg_max_hist = 120
+}
+
+//--------------------------------------------------
+// pPointAssign Configuration Block   [ΣΗΜ Lab07]
+ProcessConfig = pPointAssign
+{
+  AppTick   = 4
+  CommsTick = 4
+
+  // [ΣΗΜ] Ta oximata - DEN einai hardcoded ston kwdika, ercontai apo edw.
+  //   Mia grammi ana oxima. To onoma prepei na tairiazei me to community name.
+  vname = henry
+  vname = gilda
+
+  // [ΣΗΜ] false = enallaks (1o->henry, 2o->gilda, 3o->henry...)
+  //       true  = kata perioxi (dytika/anatolika - to X-misiko stis 87.5)
+  assign_by_region = true
+
+  // [ΣΗΜ] ta oria X tis perioxis (idia me tou uTimerScript). Xrisima MONO
+  //   otan assign_by_region=true, gia na vrei to misiko.
+  region_xmin = -25
+  region_xmax = 200
+}
+
+//--------------------------------------------------
+// uFldShoreBroker Configuration Block
+
+ProcessConfig = uFldShoreBroker
+{
+  AppTick       = 1
+  CommsTick     = 1
+
+  qbridge  = DEPLOY, NODE_REPORT
+  qbridge  = STATION_KEEP, APPCAST_REQ
+  qbridge  = MOOS_MANUAL_OVERRIDE
+  qbridge  = REFUEL_NEEDED            // [ΣΗΜ Ex4] REFUEL_NEEDED_ALL/_$V -> REFUEL_NEEDED
+  qbridge  = VISIT_POINT              // [ΣΗΜ Lab07] VISIT_POINT_HENRY -> henry, _GILDA -> gilda
+
+  bridge   = src=RETURN_ALL, alias=RETURN
+  bridge   = src=RETURN_$V,  alias=RETURN
+}
+
+//--------------------------------------------------------
+ProcessConfig = pMarineViewer
+{
+  AppTick    = 4
+  CommsTick  = 4
+
+  tiff_file            = forrest19.tif
+  set_pan_x            = -90
+  set_pan_y            = -280
+  zoom                 = 0.65
+  vehicles_shape_scale = 1.5
+  vehicles_name_mode   = names+shortmode
+
+	nodes_font_size = xlarge
+	procs_font_size = xlarge
+	appcast_font_size = large
+	
+  point_viewable_labels   = false
+  polygon_viewable_labels = false
+  appcast_viewable     = true
+  appcast_color_scheme = indigo
+  hash_delta           = 50
+  hash_viewable        = true
+  hash_shade           = 0.35
+
+  scope = PHI_HOST_INFO
+
+  button_one   = DEPLOY  # DEPLOY_ALL=true 
+  button_one   = MOOS_MANUAL_OVERRIDE_ALL=false 
+  button_one   = RETURN_ALL=false # STATION_KEEP_ALL=false
+
+  button_two   = RETURN  # RETURN_ALL=true
+  button_two   = STATION_KEEP_ALL=false
+
+  button_three = STATION  # STATION_KEEP_ALL=true
+
+  // [ΣΗΜ Ex4] neo koumpi: dinei entoli anefodiasmou se OLA ta oximata
+  button_four  = REFUEL  # REFUEL_NEEDED_ALL=true
+}
