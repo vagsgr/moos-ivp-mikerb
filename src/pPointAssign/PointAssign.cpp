@@ -21,6 +21,7 @@ PointAssign::PointAssign()
   m_assign_by_region = false;   // default: enallaks (alternating)
   m_region_xmin      = -25;     // ta oria X tis perioxis (apo to lab)
   m_region_xmax      = 200;
+  m_broadcast_all    = false;   // [Lab07_upgr] default OFF -> palio lab_07 idio
 
   m_points_total     = 0;
   m_invalid_points   = 0;
@@ -51,6 +52,12 @@ bool PointAssign::OnNewMail(MOOSMSG_LIST &NewMail)
 
     if(key == "VISIT_POINT")
       handleVisitPoint(sval);
+    else if(key == "POINT_CLAIMED")
+      handlePointClaimed(sval);
+    else if(key == "PLAN_CLAIM")
+      // [Lab07_upgr] passthrough relay: schedio enos oximatos -> ola ta oximata
+      //   (mesw ShoreBroker qbridge=PLAN_CLAIM). Diatiroume to payload (vname/pos/ids).
+      Notify("PLAN_CLAIM_ALL", sval);
     else if(key == "NODE_REPORT") {
       // [ΣΗΜ HANDSHAKING] Kathe oxima stelnei NODE_REPORT otan einai syndedemeno.
       //   Otan to laboume, simainei oti to oxima einai UP kai ta qbridge routes
@@ -111,7 +118,18 @@ void PointAssign::handleVisitPoint(const string& sval)
     return;
   }
 
-  // --- Apofasi: se POIO oxima paei (index sto m_vnames) ---
+  // [Lab07_upgr] BROADCAST MODE: stelne to IDIO simeio se OLA ta oximata. Kathe
+  //   oxima exei to pliris set kai diekdikei dynamika (MCTS + claiming). To
+  //   xrwma sto viewer = oudetero (to telos xrwmatizetai apo to oxima pou to pairnei).
+  if(m_broadcast_all) {
+    for(unsigned int i=0; i<m_vnames.size(); i++)
+      Notify("VISIT_POINT_" + toupper(m_vnames[i]), sval);
+    postViewPoint(x, y, "pt_" + id, "white");
+    m_points_total++;
+    return;
+  }
+
+  // --- (Palia symperifora) Apofasi: se POIO oxima paei (index sto m_vnames) ---
   unsigned int idx;
   if(m_assign_by_region)
     idx = chooseVehicle(x);                 // me vasi tin thesi X (east/west)
@@ -146,6 +164,40 @@ unsigned int PointAssign::chooseVehicle(double x)
   if(idx < 0) idx = 0;
   if(idx >= (int)n) idx = n - 1;   // clamp sta oria
   return((unsigned int)idx);
+}
+
+//---------------------------------------------------------
+// Procedure: handlePointClaimed()
+// [Lab07_upgr] Ena oxima diekdikise simeio. To string: "vname=<v>,id=<n>".
+//   Rolos mas (sto shoreside):
+//   (1) DEDUPE me to id (mono i prwti diekdikisi metraei).
+//   (2) SCOREBOARD: +1 sto oxima, postare SCORE_<VNAME>.
+//   (3) RELAY: postare POINT_CLAIMED_ALL=<id> -> to uFldShoreBroker qbridge to
+//       skorpaei se OLA ta oximata (-> POINT_CLAIMED), wste to allo oxima na to
+//       afairesei apo ti diadromi tou. (Apofeugoume diples episkepseis.)
+void PointAssign::handlePointClaimed(const string& sval)
+{
+  string vname = tolower(tokStringParse(sval, "vname", ',', '='));
+  string id    = tokStringParse(sval, "id", ',', '=');
+  if(id == "")
+    return;
+
+  // (1) dedupe
+  if(m_claimed_ids.count(id) > 0)
+    return;
+  m_claimed_ids.insert(id);
+
+  // (2) scoreboard
+  for(unsigned int i=0; i<m_vnames.size(); i++) {
+    if(m_vnames[i] == vname) {
+      m_vscore[i]++;
+      Notify("SCORE_" + toupper(m_vnames[i]), (double)m_vscore[i]);
+      break;
+    }
+  }
+
+  // (3) relay pros ola ta oximata (mesw ShoreBroker qbridge=POINT_CLAIMED)
+  Notify("POINT_CLAIMED_ALL", "id=" + id);
 }
 
 //---------------------------------------------------------
@@ -234,10 +286,14 @@ bool PointAssign::OnStartUp()
       //   ta onomata DEN einai hardcoded -> ercontai apo to .moos.
       m_vnames.push_back(tolower(value));
       m_vcount.push_back(0);
+      m_vscore.push_back(0);
       handled = true;
     }
     else if(param == "assign_by_region") {
       handled = setBooleanOnString(m_assign_by_region, value);
+    }
+    else if(param == "broadcast_all") {
+      handled = setBooleanOnString(m_broadcast_all, value);
     }
     else if(param == "region_xmin") {
       handled = setDoubleOnString(m_region_xmin, value);
@@ -253,8 +309,8 @@ bool PointAssign::OnStartUp()
   // [ΣΗΜ] Asfaleia: an den dothike kanena vname, valе henry+gilda gia na trexei.
   if(m_vnames.size() == 0) {
     reportConfigWarning("No vname given - using default henry, gilda");
-    m_vnames.push_back("henry"); m_vcount.push_back(0);
-    m_vnames.push_back("gilda"); m_vcount.push_back(0);
+    m_vnames.push_back("henry"); m_vcount.push_back(0); m_vscore.push_back(0);
+    m_vnames.push_back("gilda"); m_vcount.push_back(0); m_vscore.push_back(0);
   }
 
   registerVariables();
@@ -268,6 +324,8 @@ void PointAssign::registerVariables()
   AppCastingMOOSApp::RegisterVariables();
   Register("VISIT_POINT", 0);   // [ΣΗΜ] grafomaste gia ta simeia tou uTimerScript
   Register("NODE_REPORT", 0);   // [ΣΗΜ] gia na kseroume pote ta oximata einai etoima
+  Register("POINT_CLAIMED", 0); // [Lab07_upgr] episkepseis apo ta oximata (claim-relay+score)
+  Register("PLAN_CLAIM", 0);    // [Lab07_upgr] schedia oximatwn (passthrough relay)
 }
 
 //------------------------------------------------------------
@@ -276,6 +334,8 @@ void PointAssign::registerVariables()
 bool PointAssign::buildReport()
 {
   m_msgs << "Config:                                     " << endl;
+  m_msgs << "  Broadcast all:    " << boolToString(m_broadcast_all)
+         << "  (Lab07_upgr: ola ta simeia se ola ta oximata)" << endl;
   m_msgs << "  Assign by region: " << boolToString(m_assign_by_region) << endl;
   m_msgs << "  Region X:         [" << doubleToStringX(m_region_xmin,1)
          << ", " << doubleToStringX(m_region_xmax,1) << "]" << endl;
@@ -289,12 +349,14 @@ bool PointAssign::buildReport()
   m_msgs << "Invalid points:     " << m_invalid_points << endl;
   m_msgs << endl;
 
-  ACTable actab(2);
-  actab << "Vehicle | Points Assigned";
+  ACTable actab(3);
+  actab << "Vehicle | Points Assigned | SCORE (claimed)";
   actab.addHeaderLines();
   for(unsigned int i=0; i<m_vnames.size(); i++)
-    actab << m_vnames[i] << uintToString(m_vcount[i]);
+    actab << m_vnames[i] << uintToString(m_vcount[i]) << uintToString(m_vscore[i]);
   m_msgs << actab.getFormattedString();
+  m_msgs << endl;
+  m_msgs << "[Lab07_upgr] Total claimed (unique): " << m_claimed_ids.size() << endl;
 
   return(true);
 }

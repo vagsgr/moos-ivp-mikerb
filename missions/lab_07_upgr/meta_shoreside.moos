@@ -56,12 +56,15 @@ ProcessConfig = pPointAssign
   vname = henry
   vname = gilda
 
-  // [ΣΗΜ] false = enallaks (1o->henry, 2o->gilda, 3o->henry...)
-  //       true  = kata perioxi (dytika/anatolika - to X-misiko stis 87.5)
+  // [Lab07_upgr] BROADCAST: stelne KATHE simeio se OLA ta oximata. Kathe oxima
+  //   exei to pliris set kai diekdikei dynamika (decentralized MCTS + claiming).
+  //   Otan einai true, ta assign_by_region/region_* agnoountai.
+  broadcast_all = true
+
+  // [ΣΗΜ] (xrisimopoieitai mono an broadcast_all=false) false=enallaks, true=perioxi
   assign_by_region = true
 
-  // [ΣΗΜ] ta oria X tis perioxis (idia me tou uTimerScript). Xrisima MONO
-  //   otan assign_by_region=true, gia na vrei to misiko.
+  // [ΣΗΜ] ta oria X tis perioxis (idia me tou uTimerScript).
   region_xmin = -25
   region_xmax = 200
 }
@@ -78,7 +81,9 @@ ProcessConfig = uFldShoreBroker
   qbridge  = STATION_KEEP, APPCAST_REQ
   qbridge  = MOOS_MANUAL_OVERRIDE
   qbridge  = REFUEL_NEEDED            // [ΣΗΜ Ex4] REFUEL_NEEDED_ALL/_$V -> REFUEL_NEEDED
-  qbridge  = VISIT_POINT              // [ΣΗΜ Lab07] VISIT_POINT_HENRY -> henry, _GILDA -> gilda (Πώς περνούν τα σημεία από shoreside προς τα οχήματα)
+  qbridge  = VISIT_POINT              // [ΣΗΜ Lab07] VISIT_POINT_HENRY -> henry, _GILDA -> gilda
+  qbridge  = POINT_CLAIMED            // [Lab07_upgr] POINT_CLAIMED_ALL -> POINT_CLAIMED se ola ta oximata (episkepseis)
+  qbridge  = PLAN_CLAIM               // [Lab07_upgr] PLAN_CLAIM_ALL -> PLAN_CLAIM se ola ta oximata (schedia)
 
   bridge   = src=RETURN_ALL, alias=RETURN
   bridge   = src=RETURN_$V,  alias=RETURN
@@ -110,6 +115,9 @@ ProcessConfig = pMarineViewer
   hash_shade           = 0.35
 
   scope = PHI_HOST_INFO
+  scope = SCORE_HENRY                 // [Lab07_upgr] scoreboard: posa diekdikise o henry
+  scope = SCORE_GILDA                 // [Lab07_upgr] scoreboard: posa diekdikise i gilda
+  scope = POINT_CLAIMED_ALL           // [Lab07_upgr] teleftaia diekdikisi
 
   button_one   = DEPLOY  # DEPLOY_ALL=true 
   button_one   = MOOS_MANUAL_OVERRIDE_ALL=false 
