@@ -29,12 +29,21 @@ import sys
 import math
 import random
 
+# ---------------------------------------------------------------------------
 # ----- parametroi MCTS (mporoun na rythmistoun apo CLI/env, alla defaults edw) -----
+#90%:
+#    διάλεξε το κοντινότερο εφικτό σημείο
+#10%:
+#    διάλεξε τυχαίο εφικτό σημείο
+# ---------------------------------------------------------------------------
+
+
 ITERS  = 1500     # posa MCTS rollouts (gia 50-100 simeia: <1s)
 UCT_C  = 1.4      # syntelestis exploration sto UCT
 EPS    = 0.10     # epsilon-greedy mesa sto rollout (0=kathara greedy, 1=tyxaio)
 
 
+#Υπολογίζει την ευκλείδεια απόσταση
 def dist(ax, ay, bx, by):
     return math.hypot(ax - bx, ay - by)
 
@@ -73,6 +82,7 @@ def greedy_path(pts, sx, sy, budget):
 #  Rollout (playout) politiki: epsilon-greedy nearest. Apo dosmeni katastasi
 #  synexizei na prosthetei efikta simeia mexri na min xwraei tipota. Epistrefei
 #  to PLITHOS simeion pou mazeyei (= reward).
+#Το rollout δεν κινεί πραγματικά το όχημα. Είναι μόνο εσωτερική προσομοίωση πιθανής μελλοντικής διαδρομής.
 # ---------------------------------------------------------------------------
 def rollout(pts, used, cx, cy, length, budget):
     used = used[:]               # topiko antigrafo
@@ -145,6 +155,7 @@ def two_opt(pts, sx, sy, seq):
 def insertion(pts, sx, sy, seq, budget):
     # Greedy cheapest-insertion: vale simeia pou DEN einai sto path, sti thesi me
     # to mikrotero epipleon kostos, oso to synoliko mikos paramenei <= budget.
+    # Eξετάζει σημεία που δεν βρίσκονται ήδη στη διαδρομή και προσπαθεί να τα τοποθετήσει στη θέση με το μικρότερο πρόσθετο κόστος.
     in_path = [False] * len(pts)
     for i in seq:
         in_path[i] = True
