@@ -1,0 +1,67 @@
+//--------    FILE: alpha.bhv  (Lab13 Asg3 - BHV_ZigLeg)  -------------
+
+initialize   DEPLOY = false
+initialize   RETURN = false
+
+//----------------------------------------------
+Behavior = BHV_Waypoint
+{
+  name      = waypt_survey
+  pwt       = 100
+  condition = RETURN = false
+  condition = DEPLOY = true
+  endflag   = RETURN = true
+
+  updates    = WPT_UPDATE
+  perpetual  = true
+
+               speed = 2.0
+      capture_line = true
+    capture_radius = 5.0
+       slip_radius = 15.0
+           polygon = 60,-40:60,-160:150,-160:180,-100:150,-40
+             order = normal
+            repeat = 10
+
+    visual_hints = nextpt_color=yellow, nextpt_vertex_size=8
+    visual_hints = vertex_color=dodger_blue, edge_color=white
+    visual_hints = vertex_size=5, edge_size=1
+}
+
+//----------------------------------------------
+Behavior=BHV_Waypoint
+{
+  name      = waypt_return
+  pwt       = 100
+  condition = RETURN = true
+  condition = DEPLOY = true
+  perpetual = true
+  updates   = RETURN_UPDATE
+  endflag   = RETURN = false
+  endflag   = DEPLOY = false
+  endflag   = MISSION = complete
+
+           speed = 2.0
+  capture_radius = 2.0
+     slip_radius = 8.0
+          points = 0,-20
+}
+
+//----------------------------------------------
+// [Lab13][Asg3] To diko mou ZigLeg behavior. 5s meta apo kathe
+// waypoint, gia zig_duration deuterolepta, sprwxnei to skafos na
+// strivei kata zig_angle moires (sxetika me to heading sti stigmi
+// enarksis tou zig). pwt MEGALYTERO apo to waypt_survey (100) wste
+// na nikaei prosorina tin antikeimeniki synartisi tou waypoint.
+// updates=ZIG_UPDATE -> allagi parametron ZONTANA sto demo, px:
+//   uPokeDB alpha.moos ZIG_UPDATE="zig_angle=80"
+Behavior = BHV_ZigLeg
+{
+  name      = bhv_zigleg
+  pwt       = 500
+  condition = DEPLOY = true
+  updates   = ZIG_UPDATE
+
+  zig_angle    = 45
+  zig_duration = 10
+}
