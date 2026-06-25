@@ -24,6 +24,8 @@
 #define BHV_SCOUT_HEADER
 
 #include <string>
+#include <map>                 // [Lab14] avoid-set: id -> thesi swimmer
+#include <set>                 // [Lab14] rescued ids
 #include "IvPBehavior.h"
 #include "XYPoint.h"
 #include "XYPolygon.h"
@@ -43,6 +45,10 @@ protected:
   void         updateScoutPoint();
   void         postViewPoint(bool viewable=true);
 
+  // [Lab14] idea 4: mazepse registered swimmers + vathmologise ypopsifia simeia
+  void         ingestSwimmerMail();
+  double       scorePoint(double px, double py) const;
+
 protected: // State variables
   double   m_osx;
   double   m_osy;
@@ -54,11 +60,21 @@ protected: // State variables
 
   XYPolygon m_rescue_region;
 
+  // [Lab14] avoid-set: gnwstoi registered swimmers (id->thesi) kai osoi diaswthikan
+  std::map<std::string, XYPoint> m_known;
+  std::set<std::string>          m_done;
+
 protected: // Config variables
   double m_capture_radius;
   double m_desired_speed;
 
   std::string m_tmate;
+
+  // [Lab14] knobs gia thn epilogi simeiou (sample-N-pick-best + pedio apwthisis)
+  unsigned int m_num_candidates;   // posa tyxaia ypopsifia ana epilogi
+  double       m_sigma;            // platos pediou apwthisis (m)
+  double       m_travel_w;         // a: poini apostasis taxidiou
+  double       m_w_reg;            // baros registered swimmer (Phase2: W_PLAN gia plan ids)
 };
 
 #define IVP_EXPORT_FUNCTION
